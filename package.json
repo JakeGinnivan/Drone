@@ -9,6 +9,9 @@
     "build:prod": "set NODE_ENV=production && webpack -p",
     "lint": "eslint src"
   },
+  "engines": {
+    "node": "4.1.x"
+  },
   "author": "",
   "license": "ISC",
   "devDependencies": {
