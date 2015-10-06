@@ -1,5 +1,6 @@
 var path = require('path')
 var webpack = require('webpack')
+var fs = require('fs')
 var dependencies = require('./build/getVendorDependencies.js')
 var ExtractTextPlugin = require("extract-text-webpack-plugin")
 
@@ -9,6 +10,17 @@ var env = process.env.NODE_ENV || 'development'
 var isProduction = env.trim().toUpperCase() === 'PRODUCTION'
 var isDevelopment = !isProduction
 var entryPoints = ['./src/app.js']
+
+// Copy index to served folder.
+var copyDirs = ['./dist', './dist/test-data', './dev-server', './dev-server/test-data/']
+copyDirs.forEach(function (dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+})
+
+fs.writeFileSync('./dist/web.config', fs.readFileSync('./web.config'), {flag: 'w+'})
+
 
 //only start the hot-server if we are in development
 if(isDevelopment) {
