@@ -41,4 +41,4 @@ var configureServer = function(expressServer) {
   })
 }
 
-export default configureServer;
+export default configureServer
