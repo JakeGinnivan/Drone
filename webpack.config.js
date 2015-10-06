@@ -11,17 +11,6 @@ var isProduction = env.trim().toUpperCase() === 'PRODUCTION'
 var isDevelopment = !isProduction
 var entryPoints = ['./src/app.js']
 
-// Copy index to served folder.
-var copyDirs = ['./dist', './dist/test-data', './dev-server', './dev-server/test-data/']
-copyDirs.forEach(function (dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
-})
-
-fs.writeFileSync('./dist/web.config', fs.readFileSync('./web.config'), {flag: 'w+'})
-
-
 //only start the hot-server if we are in development
 if(isDevelopment) {
   console.log('detected development - will use hot-reload')
