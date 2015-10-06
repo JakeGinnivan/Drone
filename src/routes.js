@@ -9,4 +9,4 @@ export default (
     <IndexRoute component={Home} />
     <Route path="about" component={About}/>
   </Route>
-);
+)
