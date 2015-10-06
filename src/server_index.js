@@ -21,21 +21,13 @@ function index(innerHtml) {
 }
 
 var configureServer = function(expressServer) {
-  expressServer.use(function(req, res) {
-    console.log('resolving', req.url)
-    // Note that req.url here should be the full URL path from
-    // the original request, including the query string.
+  expressServer.use(function(req, res, next) {
     match({ routes, location: createLocation(req.url) }, (error, redirectLocation, renderProps) => {
-      console.log('called back')
-      if (error) {
-        res.status(500).send(error.message)
-      } else if (redirectLocation) {
-        res.redirect(302, redirectLocation.pathname + redirectLocation.search)
-      } else if (renderProps) {
+      if (!error && !redirectLocation && renderProps) {
         let html = renderToString(<RoutingContext {...renderProps} />)
         res.status(200).send(index(html))
       } else {
-        res.status(404).send('Not found')
+        next()
       }
     })
   })

@@ -26,10 +26,10 @@ if (port === 4444) {
 
   var compiler = webpack(config)
   var server = new WebpackDevServer(compiler, {
-      proxy: {
-          "*": "http://localhost:4444"
-      },
-      stats: {colors: true}
+    proxy: {
+      "*": "http://localhost:4444"
+    },
+    stats: {colors: true}
   })
   server.listen(8090, 'localhost', function (err) {
     if (err) {
