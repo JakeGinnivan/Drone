@@ -1,13 +1,17 @@
 import React from 'react'
 import Header from './header.js'
 import Footer from './footer.js'
+import { connect } from 'react-redux'
 
-export default class AppLayout extends React.Component {
-  constructor(props) {
-    super(props)
-  }
+class Layout extends React.Component {
+  constructor(props) { super(props) }
 
   render() {
+      if (!this.props.authenticated) {
+      return (
+        <div><a href="/auth/github/login">Login</a> with github before using lackey</div>
+      )
+    }
     return (
       <div>
         <Header />
@@ -17,3 +21,5 @@ export default class AppLayout extends React.Component {
     )
   }
 }
+
+export default connect(s => ({ authenticated: s.authenticated }))(Layout)

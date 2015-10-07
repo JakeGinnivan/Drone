@@ -7,12 +7,27 @@ var port = process.env.PORT || 4444
 console.log('Will use port ' + port)
 
 var express = require('express'),
+    session = require('express-session'),
     path = require('path'),
     app = express(),
     port = port,
-    configureServer = require('./src/server_index')
+    configureServer = require('./src/server_index'),
+    configureServerRoutes = require('./src/server_routes')
+
+app.use(session({
+  secret: 'lackey',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { }
+}))
+
+if (app.get('env') === 'production') {
+  app.set('trust proxy', 1) // trust first proxy
+  sess.cookie.secure = true // serve secure cookies
+}
 
 configureServer(app)
+configureServerRoutes(app)
 app.use(express.static(path.join(__dirname, 'dist')))
 
 app.listen(port)
@@ -33,7 +48,7 @@ if (port === 4444) {
   })
   server.listen(8090, 'localhost', function (err) {
     if (err) {
-        console.log(err)
+      console.log(err)
     }
 
     console.log('Listening at localhost:8090')

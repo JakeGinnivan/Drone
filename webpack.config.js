@@ -1,12 +1,10 @@
 var path = require('path')
 var webpack = require('webpack')
-var fs = require('fs')
 var dependencies = require('./build/getVendorDependencies.js')
 var ExtractTextPlugin = require("extract-text-webpack-plugin")
 
 var env = process.env.NODE_ENV || 'development'
 
-var env = process.env.NODE_ENV || 'development'
 var isProduction = env.trim().toUpperCase() === 'PRODUCTION'
 var isDevelopment = !isProduction
 var entryPoints = ['./src/app.js']
