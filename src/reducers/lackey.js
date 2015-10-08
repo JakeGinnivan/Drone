@@ -1,5 +1,6 @@
 const initialState = {
-  authenticated: false
+  authenticated: false,
+  repositories: []
 }
 
 export default (state, action) => {
@@ -9,8 +10,15 @@ export default (state, action) => {
 
   switch (action.type) {
     case 'LOGGED_IN':
+      console.log('Logging in', action)
       return Object.assign({}, state, {
-        authenticated: true
+        authenticated: true,
+        githubToken: action.githubToken
+      })
+    case 'REPOSITORIES_LOADED':
+      console.log('Repositories loaded', action)
+      return Object.assign({}, state, {
+        repositories: action.repositories
       })
     default:
       return state

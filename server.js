@@ -1,4 +1,7 @@
+/*eslint "no-console":0*/
 require("babel/register")
+var path = require('path')
+require('app-module-path').addPath(path.join(__dirname, 'src'))
 
 console.log('Starting express server')
 
@@ -8,23 +11,22 @@ console.log('Will use port ' + port)
 
 var express = require('express'),
     session = require('express-session'),
-    path = require('path'),
     app = express(),
-    port = port,
     configureServer = require('./src/server_index'),
-    configureServerRoutes = require('./src/server_routes')
-
-app.use(session({
-  secret: 'lackey',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { }
-}))
+    configureServerRoutes = require('./src/server_routes'),
+    sess = {
+      secret: 'lackey',
+      resave: false,
+      saveUninitialized: true,
+      cookie: { httpOnly: false }
+    }
 
 if (app.get('env') === 'production') {
   app.set('trust proxy', 1) // trust first proxy
   sess.cookie.secure = true // serve secure cookies
 }
+
+app.use(session(sess))
 
 configureServer(app)
 configureServerRoutes(app)

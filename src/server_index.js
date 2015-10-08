@@ -1,5 +1,5 @@
 import React from 'react'
-import { renderToString } from 'react-dom/server'
+import ReactDOMServer from 'react-dom/server'
 import { match, RoutingContext } from 'react-router'
 import createLocation from 'history/lib/createLocation'
 import routes from './routes'
@@ -7,6 +7,8 @@ import routes from './routes'
 import lackey from './reducers/lackey'
 import { createStore } from 'redux'
 import { Provider } from 'react-redux'
+
+import _ from 'lodash'
 
 function index(innerHtml, initialState) {
   return `<html>
@@ -32,11 +34,22 @@ export default function(expressServer) {
     match({ routes, location: createLocation(req.url) }, (error, redirectLocation, renderProps) => {
       if (!error && !redirectLocation && renderProps) {
         const store = createStore(lackey)
-        console.log('session:', req.session)
         if (req.session.githubToken)
-          store.dispatch({ type: 'LOGGED_IN' })
-        let html = renderToString(<Provider store={store}><RoutingContext {...renderProps} /></Provider>)
-        res.status(200).send(index(html, store.getState()))
+          store.dispatch({ type: 'LOGGED_IN', githubToken: req.session.githubToken })
+
+        let loadDataPromises = _(renderProps.components)
+          .filter(c => c.preloadStore)
+          .map(c => c.preloadStore(store))
+          .value()
+
+        Promise
+          .all(loadDataPromises)
+          .then(() => {
+            var app = <Provider store={store}><RoutingContext {...renderProps} /></Provider>
+            var html = ReactDOMServer.renderToString(app)
+            var result = index(html, store.getState())
+            res.status(200).send(result)
+          })
       } else {
         next()
       }
