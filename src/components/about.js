@@ -3,6 +3,6 @@ import { Link } from 'react-router'
 
 export default () => (
   <div>
-    about lackey <Link to='/'>HOME</Link>
+    about drone <Link to='/'>HOME</Link>
   </div>
 )

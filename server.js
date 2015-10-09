@@ -15,7 +15,7 @@ var express = require('express'),
     configureServer = require('./src/server_index'),
     configureServerRoutes = require('./src/server_routes'),
     sess = {
-      secret: 'lackey',
+      secret: 'drone',
       resave: false,
       saveUninitialized: true,
       cookie: { httpOnly: false }

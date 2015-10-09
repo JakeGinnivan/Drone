@@ -38,7 +38,6 @@ Repositories.preloadStore = store => {
   if (!githubToken) return Promise.resolve([])
   var promise = getAllRepositories(githubToken)
   return promise.then(repositories => {
-    console.log('finished')
     store
       .dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories.map(r => ({
         name: r.full_name,

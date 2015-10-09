@@ -9,7 +9,7 @@ class Layout extends React.Component {
   render() {
       if (!this.props.authenticated) {
       return (
-        <div><a href="/auth/github/login">Login</a> with github before using lackey</div>
+        <div><a href="/auth/github/login">Login</a> with github before using drone</div>
       )
     }
     return (

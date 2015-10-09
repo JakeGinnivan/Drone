@@ -4,7 +4,7 @@ import { match, RoutingContext } from 'react-router'
 import createLocation from 'history/lib/createLocation'
 import routes from './routes'
 
-import lackey from './reducers/lackey'
+import drone from './reducers/drone'
 import { createStore } from 'redux'
 import { Provider } from 'react-redux'
 
@@ -33,7 +33,7 @@ export default function(expressServer) {
   expressServer.use(function(req, res, next) {
     match({ routes, location: createLocation(req.url) }, (error, redirectLocation, renderProps) => {
       if (!error && !redirectLocation && renderProps) {
-        const store = createStore(lackey)
+        const store = createStore(drone)
         if (req.session.githubToken)
           store.dispatch({ type: 'LOGGED_IN', githubToken: req.session.githubToken })
 
