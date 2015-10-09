@@ -1,5 +1,6 @@
 import { CLIENT_ID, CLIENT_SECRET } from './constants'
 import axios from 'axios'
+import { getAllRepositories } from 'services/repositories'
 
 export default function(expressServer) {
   // TODO Session state?
@@ -21,6 +22,12 @@ export default function(expressServer) {
       console.log('received post response', response.data, response.data.access_token)
       req.session.githubToken = response.data.access_token
       req.session.save(() => res.redirect('/'))
+    })
+  })
+
+  expressServer.get('/api/getAllRepositories', (req, res) => {
+    getAllRepositories(req.session.githubToken).then(response => {
+      res.status(200).json(response)
     })
   })
 }

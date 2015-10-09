@@ -15,7 +15,13 @@ export default (state, action) => {
       })
     case 'REPOSITORIES_LOADED':
       return Object.assign({}, state, {
-        repositories: action.repositories
+        repositories: action.repositories,
+        repositoriesLoading: false
+      })
+      case 'LOADING_REPOSITORIES':
+      return Object.assign({}, state, {
+        repositories: [],
+        repositoriesLoading: true
       })
     default:
       return state

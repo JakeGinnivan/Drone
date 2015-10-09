@@ -4,7 +4,34 @@ import { connect } from 'react-redux'
 import { getAllRepositories } from 'services/repositories.js'
 
 class Repositories extends React.Component {
+  constructor(props){
+    super(props)
+    this.synchroniseRepositories = this.synchroniseRepositories.bind(this)
+  }
+
+  componentWillMount() {
+    if (!this.props.repositories) {
+      this.props.dispatch({type: 'LOADING_REPOSITORIES'})
+
+    // Need moar code reuse..
+    getAllRepositories()
+      .then(repositories => {
+        this.props.dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories.map(r => ({
+            name: r.full_name,
+            selected: false
+          }))})
+      })
+    }
+  }
+
+  synchroniseRepositories() {
+
+  }
+
   render() {
+    if (this.props.repositoriesLoading)
+      return <div>Loading....</div>
+
     return (
       <div>
         <div style={{width: '50%', float: 'right'}}>
@@ -19,6 +46,7 @@ class Repositories extends React.Component {
         </div>
         <div style={{width: '50%', float: 'left'}}>
           <h2>Available</h2>
+          <p>Missing a repoistory? <a onClick={this.synchroniseRepositories}>Synchronise</a></p>
           <ul>
             {
               _
@@ -54,5 +82,6 @@ Repositories.propTypes = {
 }
 
 export default connect(s => ({
-  repositories: s.repositories
+  repositories: s.repositories,
+  repositoriesLoading: s.repositoriesLoading
 }))(Repositories)
