@@ -9,7 +9,7 @@ class Layout extends React.Component {
   render() {
       if (!this.props.authenticated) {
       return (
-        <div><a href="/auth/github/login">Login</a> with github before using drone</div>
+        <div><a href={'/auth/github/login?redirect='}>Login</a> with github before using drone</div>
       )
     }
     return (
@@ -22,4 +22,10 @@ class Layout extends React.Component {
   }
 }
 
-export default connect(s => ({ authenticated: s.authenticated }))(Layout)
+export default connect(s => {
+  console.log(s)
+  return {
+    authenticated: s.authenticated,
+    location: s.router.location
+  }
+})(Layout)

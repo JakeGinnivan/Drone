@@ -1,11 +1,11 @@
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
-import { match, RoutingContext } from 'react-router'
-import createLocation from 'history/lib/createLocation'
+import { ReduxRouter, routerStateReducer } from 'redux-router'
+import { reduxReactRouter, match } from 'redux-router/server'
 import routes from './routes'
 
 import drone from './reducers/drone'
-import { createStore } from 'redux'
+import { createStore, compose, combineReducers } from 'redux'
 import { Provider } from 'react-redux'
 
 import _ from 'lodash'
@@ -29,11 +29,20 @@ function index(innerHtml, initialState) {
 `
 }
 
+
 export default function(expressServer) {
   expressServer.use(function(req, res, next) {
-    match({ routes, location: createLocation(req.url) }, (error, redirectLocation, renderProps) => {
+    const reducer = combineReducers({
+      router: routerStateReducer,
+      drone
+    })
+    const store = compose(
+      reduxReactRouter({ routes })
+    )(createStore)(reducer)
+    store.dispatch(match(req.url, (error, redirectLocation, renderProps) => {
+      console.log('matched')
       if (!error && !redirectLocation && renderProps) {
-        const store = createStore(drone)
+
         if (req.session.githubToken)
           store.dispatch({ type: 'LOGGED_IN', githubToken: req.session.githubToken })
 
@@ -45,14 +54,18 @@ export default function(expressServer) {
         Promise
           .all(loadDataPromises)
           .then(() => {
-            var app = <Provider store={store}><RoutingContext {...renderProps} /></Provider>
-            var html = ReactDOMServer.renderToString(app)
-            var result = index(html, store.getState())
-            res.status(200).send(result)
+            var app = <Provider store={store}><ReduxRouter {...renderProps} /></Provider>
+            try {
+              var html = ReactDOMServer.renderToString(app)
+              var result = index(html, store.getState())
+              res.status(200).send(result)
+            } catch (e) {
+              console.log('Failed to render', e)
+            }
           })
       } else {
         next()
       }
-    })
+    }))
   })
 }

@@ -16,6 +16,7 @@
   "license": "ISC",
   "devDependencies": {
     "app-module-path": "^1.0.4",
+    "azure-storage": "^0.6.0",
     "babel": "^5.8.23",
     "babel-core": "^5.8.25",
     "babel-eslint": "^4.1.3",
@@ -38,10 +39,12 @@
     "axios": "^0.7.0",
     "history": "^1.12.1",
     "lodash": "^3.10.1",
-    "react": "^0.14.0-rc1",
-    "react-dom": "^0.14.0-rc1",
+    "react": "^0.14.0",
+    "react-dom": "^0.14.0",
     "react-redux": "^3.1.0",
-    "react-router": "^1.0.0-rc1",
-    "redux": "^3.0.2"
+    "react-router": "^1.0.0-rc3",
+    "redux": "^3.0.2",
+    "redux-react-router": "^1.0.0-beta3",
+    "redux-router": "^1.0.0-beta3"
   }
 }

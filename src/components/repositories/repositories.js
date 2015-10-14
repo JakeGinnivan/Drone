@@ -1,12 +1,13 @@
 import React from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
-import { getAllRepositories } from 'services/repositories.js'
+import { getAllRepositories, addRepository } from 'services/api.js'
 
 class Repositories extends React.Component {
   constructor(props){
     super(props)
     this.synchroniseRepositories = this.synchroniseRepositories.bind(this)
+    this.addRepository = this.addRepository.bind(this)
   }
 
   componentWillMount() {
@@ -17,15 +18,23 @@ class Repositories extends React.Component {
     getAllRepositories()
       .then(repositories => {
         this.props.dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories.map(r => ({
-            name: r.full_name,
-            selected: false
-          }))})
+          name: r.full_name,
+          selected: false
+        }))})
       })
     }
   }
 
   synchroniseRepositories() {
 
+  }
+
+  addRepository(repo) {
+    this.props.dispatch({type: 'ADDING_REPOSITORY', name: repo})
+    addRepository(repo)
+      .then(() => {
+        this.props.dispatch({type: 'REPOSITORY_ADDED', name: repo})
+      })
   }
 
   render() {
@@ -40,7 +49,7 @@ class Repositories extends React.Component {
             {
               _
                 .filter(this.props.repositories, r => r.selected)
-                .map(r => <li key={r.name}>{r.name}</li>)
+                .map(r => <li key={r.name}>{r.name} <a onClick={() => this.addRepository(r)}>Add</a></li>)
             }
           </ul>
         </div>
