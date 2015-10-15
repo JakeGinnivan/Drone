@@ -40,7 +40,6 @@ export default function(expressServer) {
       reduxReactRouter({ routes })
     )(createStore)(reducer)
     store.dispatch(match(req.url, (error, redirectLocation, renderProps) => {
-      console.log('matched')
       if (!error && !redirectLocation && renderProps) {
 
         if (req.session.githubToken)
