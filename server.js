@@ -11,6 +11,7 @@ console.log('Will use port ' + port)
 
 var express = require('express'),
     session = require('express-session'),
+    bodyParser = require('body-parser'),
     app = express(),
     configureServer = require('./src/server_index'),
     configureServerRoutes = require('./src/server_routes'),
@@ -21,10 +22,17 @@ var express = require('express'),
       cookie: { httpOnly: false }
     }
 
+
 if (app.get('env') === 'production') {
   app.set('trust proxy', 1) // trust first proxy
   sess.cookie.secure = true // serve secure cookies
 }
+
+app.use(bodyParser.json())
+app.use(function (req, res, next) {
+  req.root = `${req.protocol}://${req.get('host')}`
+  next()
+})
 
 app.use(session(sess))
 

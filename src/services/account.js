@@ -10,8 +10,9 @@ tableService.createTableIfNotExists('users', function(error) {
 
 export function exists(id) {
   return new Promise((resolve) => {
-    tableService.retrieveEntity('users', id, 0, function(error) {
-      console.log('User exists', id, error)
+    console.log(`Check if ${id} exists`)
+    tableService.retrieveEntity('users', id.toString(), '0', function(error) {
+      console.log(error ? 'Does not exist' : 'Exists')
       resolve(!error)
     })
   })
@@ -20,14 +21,15 @@ export function exists(id) {
 export function createAccount(details) {
   var entGen = azure.TableUtilities.entityGenerator
   var entity = {
-    PartitionKey: entGen.Int32(details.id),
-    RowKey: entGen.Int32(0),
+    PartitionKey: entGen.String(details.id.toString()),
+    RowKey: entGen.String('0'),
     Name: entGen.String(details.name),
     Email: entGen.String(details.email)
   }
 
   return new Promise((resolve, reject) => {
     tableService.insertEntity('users', entity, function(error, result) {
+      console.log('Account created')
       if (!error) {
         resolve(result)
       } else {
