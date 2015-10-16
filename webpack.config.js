@@ -28,7 +28,7 @@ module.exports = {
     // you can now require('file') instead of require('file.coffee')
     extensions: ['', '.js', '.json', '.jsx'],
     alias: {
-      services: path.join(__dirname, '/src/services')
+      services: path.join(__dirname, '/src/services/browser')
     }
   },
   output: {

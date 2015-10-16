@@ -7,9 +7,10 @@ class Layout extends React.Component {
   constructor(props) { super(props) }
 
   render() {
-      if (!this.props.authenticated) {
+    if (!this.props.authenticated) {
+      var redirect = encodeURIComponent(this.props.location.pathname)
       return (
-        <div><a href={'/auth/github/login?redirect='}>Login</a> with github before using drone</div>
+        <div><a href={`/auth/github/login?redirect=${redirect}`}>Login</a> with github before using drone</div>
       )
     }
     return (
@@ -23,9 +24,8 @@ class Layout extends React.Component {
 }
 
 export default connect(s => {
-  console.log(s)
   return {
-    authenticated: s.authenticated,
+    authenticated: s.drone.authenticated,
     location: s.router.location
   }
 })(Layout)
