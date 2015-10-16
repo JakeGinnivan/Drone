@@ -18,7 +18,7 @@
     "react/jsx-uses-vars": [1],
     "react/react-in-jsx-scope": [1],
     "semi": [2, "never"],
-    "no-console": [1]
+    "no-console": [0]
   },
 
   "plugins" :  [

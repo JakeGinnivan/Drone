@@ -6,7 +6,7 @@ import {
   reduxReactRouter
 } from 'redux-router'
 import Routes from './routes'
-import createBrowserHistory from 'history/lib/createBrowserHistory'
+import createHistory from 'history/lib/createBrowserHistory'
 import drone from './reducers/drone'
 
 import { createStore, compose, combineReducers } from 'redux'
@@ -20,17 +20,12 @@ const reducer = combineReducers({
 })
 
 let store = compose(
-  reduxReactRouter({ createBrowserHistory }) //, devTools()
+  reduxReactRouter({ createHistory }) //, devTools()
 )(createStore)(reducer, initialState)
-
-// IE fix, not even sure if I need this, oh well.
-if (!window.location.origin) {
-  window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '')
-}
 
 ReactDOM.render(
   <Provider store={store}>
-    <ReduxRouter history={createBrowserHistory()}>{Routes}</ReduxRouter>
+    <ReduxRouter>{Routes}</ReduxRouter>
   </Provider>,
   document.getElementById('container')
 )
