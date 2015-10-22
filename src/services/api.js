@@ -40,7 +40,7 @@ export function addRepository(userId, repoId) {
         if (error) {
           reject(error)
         } else {
-          result.selected = entGen.Boolean(true)
+          result.Selected = entGen.Boolean(true)
           try {
             tableService.mergeEntity('userRepositories', result, function(error) {
               if (error) {
@@ -70,34 +70,6 @@ export function synchroniseRepositories(userId, githubToken) {
         var existing = _.indexBy(savedRepos, 'repoName')
         var toAdd = _.where(githubRepos, r => !existing[r.full_name])
         console.log(`Adding ${toAdd.length} new repositories`)
-        // TODO delete
-
-        // return Promise.all(toAdd.map(r => {
-        //   var entGen = azure.TableUtilities.entityGenerator
-        //   var entity = {
-        //     PartitionKey: entGen.String(userId.toString()),
-        //     RowKey: entGen.String(r.full_name),
-        //     Selected: entGen.Boolean(false)
-        //   }
-        //
-        //   return new Promise((resolve, reject) => {
-        //     console.log('Adding repo', r.full_name)
-        //     try {
-        //       tableService.insertEntity('userRepositories', entity, function(error, result) {
-        //         console.log('Repository added', r.full_name)
-        //         if (!error) {
-        //           resolve(result)
-        //         } else {
-        //           reject(error)
-        //         }
-        //       })
-        //     } catch (e) {
-        //       console.log(e)
-        //       reject(e)
-        //     }
-        //   })
-        // }))
-        // Batch not working for some reason
         var batch = new azure.TableBatch()
 
         _.forEach(toAdd, r => {
