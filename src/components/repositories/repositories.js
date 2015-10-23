@@ -1,7 +1,7 @@
 import React from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
-import { getAllRepositories, addRepository } from 'services/api.js'
+import { getAllRepositories, addRepository, synchroniseRepositories } from 'services/api'
 
 class Repositories extends React.Component {
   constructor(props){
@@ -14,26 +14,26 @@ class Repositories extends React.Component {
     if (!this.props.repositories) {
       this.props.dispatch({type: 'LOADING_REPOSITORIES'})
 
-    // Need moar code reuse..
-    getAllRepositories()
-      .then(repositories => {
-        this.props.dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories.map(r => ({
-          name: r.full_name,
-          selected: false
-        }))})
-      })
+      getAllRepositories()
+        .then(repositories => {
+          this.props.dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories})
+        })
     }
   }
 
   synchroniseRepositories() {
-
+    this.props.dispatch({type: 'SYNCHRONISING_REPOSITORIES'})
+    synchroniseRepositories()
+      .then(repositories => {
+        this.props.dispatch({type: 'REPOSITORIES_SYNCHRONISED', repositories: repositories })
+      })
   }
 
   addRepository(repo) {
-    this.props.dispatch({type: 'ADDING_REPOSITORY', name: repo})
+    this.props.dispatch({type: 'ADDING_REPOSITORY', name: repo.repoName})
     addRepository(repo)
       .then(() => {
-        this.props.dispatch({type: 'REPOSITORY_ADDED', name: repo})
+        this.props.dispatch({type: 'REPOSITORY_ADDED', name: repo.repoName})
       })
   }
 
@@ -49,18 +49,18 @@ class Repositories extends React.Component {
             {
               _
                 .filter(this.props.repositories, r => r.selected)
-                .map(r => <li key={r.name}>{r.name} <a onClick={() => this.addRepository(r)}>Add</a></li>)
+                .map(r => <li key={r.repoName}>{r.repoName}</li>)
             }
           </ul>
         </div>
         <div style={{width: '50%', float: 'left'}}>
           <h2>Available</h2>
-          <p>Missing a repoistory? <a onClick={this.synchroniseRepositories}>Synchronise</a></p>
+          <p>Missing a repoistory? <a href='#' onClick={this.synchroniseRepositories}>Synchronise</a></p>
           <ul>
             {
               _
                 .filter(this.props.repositories, r => !r.selected)
-                .map(r => <li key={r.name}>{r.name}</li>)
+                .map(r => <li key={r.repoName}>{r.repoName} <a href='#' onClick={() => this.addRepository(r)}>Add</a></li>)
             }
           </ul>
         </div>
@@ -71,16 +71,12 @@ class Repositories extends React.Component {
 
 Repositories.preloadStore = store => {
   var state = store.getState()
-  var githubToken = state.githubToken
-  if (!githubToken) return Promise.resolve([])
-  var promise = getAllRepositories(githubToken)
+  var userId = state.drone.userId
+  if (!userId) return Promise.resolve([])
+  var promise = getAllRepositories(userId)
   return promise.then(repositories => {
-    store
-      .dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories.map(r => ({
-        name: r.full_name,
-        selected: false
-      }))})
-    })
+    store.dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories})
+  })
 }
 
 Repositories.propTypes = {
@@ -91,6 +87,6 @@ Repositories.propTypes = {
 }
 
 export default connect(s => ({
-  repositories: s.repositories,
-  repositoriesLoading: s.repositoriesLoading
+  repositories: s.drone.repositories,
+  repositoriesLoading: s.drone.repositoriesLoading
 }))(Repositories)
