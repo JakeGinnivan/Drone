@@ -22,12 +22,12 @@ export function getAllRepositories(userId) {
         return
       }
       console.log(`Got ${result.entries.length} repositories`)
-      resolve(result.entries.map(repo => ({
+      resolve(_.sortBy(result.entries.map(repo => ({
         userId: repo.PartitionKey._,
         repoId: repo.RowKey._,
         repoName: repo.RepoName._,
         selected: repo.Selected._
-      })))
+      })), 'repoName'))
     })
   })
 }
@@ -68,7 +68,15 @@ export function synchroniseRepositories(userId, githubToken) {
       console.log('Syncing repos')
       return new Promise((resolve, reject) => {
         var existing = _.indexBy(savedRepos, 'repoName')
-        var toAdd = _.where(githubRepos, r => !existing[r.full_name])
+        console.log('From github', githubRepos.map(r => r.full_name))
+        console.log('Existing', Object.keys(existing))
+        var toAdd = _.filter(githubRepos, r => {
+          var exists = !existing[r.full_name]
+          return exists
+        })
+        if (toAdd.length === 0) {
+          return getAllRepositories(userId)
+        }
         console.log(`Adding ${toAdd.length} new repositories`)
         var batch = new azure.TableBatch()
 

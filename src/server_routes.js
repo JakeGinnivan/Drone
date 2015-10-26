@@ -12,7 +12,7 @@ export default function(expressServer) {
       let redirectUri = `${req.root}/auth/github/callback?redirect=${encodeURIComponent(req.query.redirect)}`
       redirect = `&redirect_uri=${redirectUri}`
     }
-    let loginUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}${redirect}` //&state=....
+    let loginUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}${redirect}&scope=read:org,admin:repo_hook` //&state=....
     console.log('Redirecting to', loginUrl)
     res.redirect(loginUrl)
   })
