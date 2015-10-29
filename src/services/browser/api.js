@@ -13,9 +13,9 @@ export function getAllRepositories() {
     .then(r => r.data)
 }
 
-export function addRepository(repo) {
+export function addRepository(repoId, repoName) {
   return axios
-    .post(window.location.origin + '/api/addRepository', repo, args)
+    .post(window.location.origin + '/api/addRepository', { repoId, repoName }, args)
     .then(r => r.data)
 }
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
-import { getAllRepositories, addRepository, synchroniseRepositories } from 'services/api'
+import { getAllRepositories, addRepository, removeRepository, synchroniseRepositories } from 'services/api'
 
 class Repositories extends React.Component {
   constructor(props){
@@ -31,9 +31,17 @@ class Repositories extends React.Component {
 
   addRepository(repo) {
     this.props.dispatch({type: 'ADDING_REPOSITORY', name: repo.repoName})
-    addRepository(repo)
+    addRepository(repo.repoId, repo.repoName)
       .then(() => {
         this.props.dispatch({type: 'REPOSITORY_ADDED', name: repo.repoName})
+      })
+  }
+
+  removeRepository(repo) {
+    this.props.dispatch({type: 'REMOVING_REPOSITORY', name: repo.repoName})
+    removeRepository(repo)
+      .then(() => {
+        this.props.dispatch({type: 'REPOSITORY_REMOVED', name: repo.repoName})
       })
   }
 
@@ -49,7 +57,7 @@ class Repositories extends React.Component {
             {
               _
                 .filter(this.props.repositories, r => r.selected)
-                .map(r => <li key={r.repoName}>{r.repoName}</li>)
+                .map(r => <li key={r.repoName}>{r.repoName} <a href="#" onClick={() => this.removeRepository(r)}>Remove</a></li>)
             }
           </ul>
         </div>

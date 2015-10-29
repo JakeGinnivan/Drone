@@ -2,7 +2,7 @@ import { CLIENT_ID, CLIENT_SECRET } from './constants'
 import axios from 'axios'
 import { getAccountDetails } from 'services/github'
 import { getAllRepositories, addRepository, synchroniseRepositories } from 'services/api'
-import { exists, createAccount } from 'services/account'
+import { createOrUpdateAccount } from 'services/account'
 
 export default function(expressServer) {
   // TODO Session state?
@@ -38,21 +38,12 @@ export default function(expressServer) {
     .then(accountDetailsResponse => {
       console.log(`Account details received for ${accountDetailsResponse.id}`)
       req.session.userId = accountDetailsResponse.id
-      return (
-        exists(accountDetailsResponse.id)
-        .then(existsResponse => {
-          if (existsResponse) {
-            console.log('User account already exists')
-            return true
-          }
-          console.log(`Creating user account for ${accountDetailsResponse.name}`)
-          return createAccount({
-            id: accountDetailsResponse.id,
-            name: accountDetailsResponse.name,
-            email: accountDetailsResponse.email
-           })
-         })
-       )
+      return createOrUpdateAccount({
+        id: accountDetailsResponse.id,
+        name: accountDetailsResponse.name,
+        email: accountDetailsResponse.email,
+        githubToken: req.session.githubToken
+      }).catch(e => console.log('Failed to create or update account', e))
     })
     .then(() => {
       var redirectTo = decodeURIComponent(req.query.redirect || '/')
@@ -70,7 +61,7 @@ export default function(expressServer) {
 
   expressServer.post('/api/addRepository', (req, res) => {
     console.log('post /api/addRepository', req.body)
-    addRepository(req.session.userId, req.body.repoId).then(response => {
+    addRepository(req.session.userId, req.body.repoId, req.body.repoName).then(response => {
       res.status(200).json(response)
     })
   })

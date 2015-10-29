@@ -4,6 +4,16 @@ const initialState = {
   authenticated: false
 }
 
+function toggleRepoAdded(state, repoName, selected) {
+  let index = _.findIndex(state.repositories, r => r.repoName === repoName)
+  let newRepo = Object.assign({}, state.repositories[index], { selected: selected, saving: false })
+  let repos = {
+    repositories: state.repositories.slice()
+  }
+  repos.repositories[index] = newRepo
+  return Object.assign({}, state, repos)
+}
+
 export default (state, action) => {
   if (typeof state === 'undefined') {
     return initialState
@@ -30,6 +40,7 @@ export default (state, action) => {
         repositoriesLoading: true
       })
     case 'ADDING_REPOSITORY':
+    case 'REMOVING_REPOSITORY':
     {
       let index = _.findIndex(state.repositories, r => r.repoName === action.name)
       let newRepo = Object.assign({}, state.repositories[index], { saving: true })
@@ -43,13 +54,11 @@ export default (state, action) => {
     }
     case 'REPOSITORY_ADDED':
     {
-      let index = _.findIndex(state.repositories, r => r.repoName === action.name)
-      let newRepo = Object.assign({}, state.repositories[index], { selected: true, saving: false })
-      let repos = {
-        repositories: state.repositories.slice()
-      }
-      repos.repositories[index] = newRepo
-      return Object.assign({}, state, repos)
+      toggleRepoAdded(state, action.name, true)
+    }
+    case 'REPOSITORY_REMOVED':
+    {
+      toggleRepoAdded(state, action.name, false)
     }
     default:
       return state
