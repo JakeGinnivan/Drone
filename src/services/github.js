@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { WEBHOOK_CALLBACK_URL } from '../constants'
 
-export function parseLinkHeader(header) {
+function parseLinkHeader(header) {
   if (header.length === 0) {
       throw new Error("input must not be of zero length")
   }
@@ -36,38 +37,80 @@ function getAllPages(args, currentResults, response) {
   return currentResults
 }
 
-export function getAccountDetails(githubToken) {
-  var args = {
+var header = function(githubToken) {
+  return {
     headers: {
       Accept: 'application/json',
       Authorization: 'token ' + githubToken
     }
   }
+}
 
+export function getAccountDetails(githubToken) {
   return axios
-    .get('https://api.github.com/user', args)
+    .get('https://api.github.com/user', header(githubToken))
     .then(response => {
-      return getAllPages(args, response.data, response)
+      return getAllPages(header(githubToken), response.data, response)
     })
 }
 
 export function getAllRepositories(githubToken) {
-  var args = {
-    headers: {
-      Accept: 'application/json',
-      Authorization: 'token ' + githubToken
-    }
-  }
-
   console.log('Getting github repos for token ' + githubToken)
   return axios
-    .get('https://api.github.com/user/repos', args)
+    .get('https://api.github.com/user/repos', header(githubToken))
     .then(response => {
       console.log('Got initial payload, loading pages')
-      return getAllPages(args, response.data, response)
+      return getAllPages(header(githubToken), response.data, response)
     })
     .then(response => {
       console.log('done loading github repos')
       return response
+    })
+}
+
+export function getAllIssues(githubToken, repoName) {
+  console.log(`Getting github issues for ${repoName}`)
+  return axios
+    .get(`https://api.github.com/repos/${repoName}/issues`, header(githubToken))
+    .then(response => {
+      console.log('Got initial payload, loading pages')
+      return getAllPages(header(githubToken), response.data, response)
+    })
+    .then(response => {
+      console.log('done loading github issues')
+      return response
+    })
+}
+
+export function getCommentsForIssue(githubToken, repoName, issueNumber) {
+  console.log(`Getting issue comments for ${repoName}/#${issueNumber}`)
+  return axios
+    .get(`https://api.github.com/repos/${repoName}/issues/${issueNumber}/comments`, header(githubToken))
+    .then(response => getAllPages(header(githubToken), response.data, response))
+    .then(response => {
+      console.log(`done loading issue comments for ${repoName}/#${issueNumber}`)
+      return response
+    })
+    .catch(e => console.log(`Failed loading issue comments for ${repoName}/#${issueNumber}`, e))
+}
+
+export function addWebhook(githubToken, repoName) {
+  var payload = {
+    name: 'web ',
+    active: true,
+    events: [ 'push', 'pull_request', 'pull_request_review_comment', 'issues', 'issue_comment' ],
+    config: {
+      url: `${WEBHOOK_CALLBACK_URL}/githubEvent`,
+      content_type: 'json'
+    }
+  }
+  console.log(`Adding webhook for ${repoName}`, payload)
+  return axios
+    .post(`https://api.github.com/repos/${repoName}/hooks`, payload, header(githubToken))
+    .then(response => {
+      console.log('add hook', response)
+    })
+    .catch(e => {
+      console.log(e.data.errors)
     })
 }

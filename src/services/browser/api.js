@@ -8,13 +8,19 @@ var args = {
 }
 
 export function getAllRepositories() {
-  return axios.get(window.location.origin + '/api/getAllRepositories', args)
+  return axios
+    .get(window.location.origin + '/api/getAllRepositories', args)
+    .then(r => r.data)
 }
 
-export function addRepository(repo) {
-  return axios.post(window.location.origin + '/api/addRepository', repo, args)
+export function addRepository(repoId, repoName) {
+  return axios
+    .post(window.location.origin + '/api/addRepository', { repoId, repoName }, args)
+    .then(r => r.data)
 }
 
 export function synchroniseRepositories() {
-  return axios.get(window.location.origin + '/api/synchroniseRepositories', args)
+  return axios
+    .get(window.location.origin + '/api/synchroniseRepositories', args)
+    .then(r => r.data)
 }

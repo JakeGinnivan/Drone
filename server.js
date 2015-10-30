@@ -12,6 +12,8 @@ console.log('Will use port ' + port)
 var express = require('express'),
     session = require('express-session'),
     bodyParser = require('body-parser'),
+    ngrok = require('ngrok'),
+    msgProcessor = require('./src/server_msg_processor'),
     app = express(),
     configureServer = require('./src/server_index'),
     configureServerRoutes = require('./src/server_routes'),
@@ -43,6 +45,8 @@ app.use(express.static(path.join(__dirname, 'dist')))
 app.listen(port)
 console.log('Server is Up and Running at Port : ' +  port)
 
+msgProcessor.start()
+
 if (port === 4444) {
   // we start a webpack-dev-server with our config
   var webpack = require('webpack')
@@ -63,4 +67,12 @@ if (port === 4444) {
 
     console.log('Listening at localhost:8090')
   })
+
+  console.log('Starting ngrok proxy')
+  ngrok.connect({
+    proto: 'http', // http|tcp|tls
+    addr: 8082,    // port or network address
+    subdomain: require('./src/constants.js').NGROK_SUBDOMAIN, // reserved tunnel name https://lackey-${hostname}.ngrok.io ,
+    authtoken: require('./src/constants.js').NGROK_AUTH_TOKEN // your authtoken from ngrok.com
+  }, function () {})
 }

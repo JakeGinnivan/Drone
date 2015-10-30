@@ -22,3 +22,5 @@ Pull requests with suggestions and next steps **really** welcome..
 ## Setup
 There are a few things you need to run this, first you need to register a github application then copy `user_constants.template.js` and rename to `user_constants.js`. Then fill in the CLIENT_ID and CLIENT_SECRET.
 You will also need a Azure table storage account, put the account and access key in that file as well.
+
+Also to receive the GitHub webhook callbacks for local testing you need to install ngrok. 

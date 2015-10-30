@@ -18,23 +18,44 @@ export function exists(id) {
   })
 }
 
-export function createAccount(details) {
+export function getToken(userId) {
+  return new Promise((resolve, reject) => {
+    try {
+      tableService.retrieveEntity('users', userId.toString(), '0', function(error, serverEntity) {
+        if(!error) {
+          resolve(serverEntity.GithubToken._)
+        } else {
+          reject(error)
+        }
+      })
+    } catch (e) {
+      reject(e)
+    }
+  })
+}
+
+export function createOrUpdateAccount(details) {
   var entGen = azure.TableUtilities.entityGenerator
   var entity = {
     PartitionKey: entGen.String(details.id.toString()),
     RowKey: entGen.String('0'),
     Name: entGen.String(details.name),
-    Email: entGen.String(details.email)
+    Email: entGen.String(details.email),
+    GithubToken: entGen.String(details.githubToken)
   }
 
   return new Promise((resolve, reject) => {
-    tableService.insertEntity('users', entity, function(error, result) {
-      console.log('Account created')
-      if (!error) {
-        resolve(result)
-      } else {
-        reject(error)
-      }
-    })
+    try {
+      tableService.insertOrReplaceEntity('users', entity, function(error, result) {
+        console.log('Account created or updated')
+        if (!error) {
+          resolve(result)
+        } else {
+          reject(error)
+        }
+      })
+    } catch (e) {
+      reject(e)
+    }
   })
 }
