@@ -1,7 +1,7 @@
 import { CLIENT_ID, CLIENT_SECRET } from './constants'
 import axios from 'axios'
 import { getAccountDetails } from 'services/github'
-import { getAllRepositories, addRepository, synchroniseRepositories } from 'services/api'
+import { getAllRepositories, getAllIssues, addRepository, removeRepository, synchroniseRepositories } from 'services/api'
 import { createOrUpdateAccount } from 'services/account'
 
 export default function(expressServer) {
@@ -59,9 +59,23 @@ export default function(expressServer) {
     })
   })
 
+  expressServer.get('/api/getAllIssues', (req, res) => {
+    console.log('get /api/getAllIssues')
+    getAllIssues(req.session.userId).then(response => {
+      res.status(200).json(response)
+    })
+  })
+
   expressServer.post('/api/addRepository', (req, res) => {
     console.log('post /api/addRepository', req.body)
     addRepository(req.session.userId, req.body.repoId, req.body.repoName).then(response => {
+      res.status(200).json(response)
+    })
+  })
+
+  expressServer.post('/api/removeRepository', (req, res) => {
+    console.log('post /api/removeRepository', req.body)
+    removeRepository(req.session.userId, req.body.repoId).then(response => {
       res.status(200).json(response)
     })
   })

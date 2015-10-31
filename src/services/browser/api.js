@@ -13,9 +13,21 @@ export function getAllRepositories() {
     .then(r => r.data)
 }
 
+export function getAllIssues() {
+  return axios
+    .get(window.location.origin + '/api/getAllIssues', args)
+    .then(r => r.data)
+}
+
 export function addRepository(repoId, repoName) {
   return axios
     .post(window.location.origin + '/api/addRepository', { repoId, repoName }, args)
+    .then(r => r.data)
+}
+
+export function removeRepository(repoId) {
+  return axios
+    .post(window.location.origin + '/api/removeRepository', { repoId }, args)
     .then(r => r.data)
 }
 

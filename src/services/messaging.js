@@ -20,7 +20,7 @@ export function ensureQueue() {
 
 export function getSingleMessage() {
   return new Promise((resolve, reject) => {
-    queueService.getMessages('lackeyqueue', function(error, result) {
+    queueService.getMessages('lackeyqueue', {numOfMessages: 1}, function(error, result) {
       if(!error) {
         if (result.length > 0) {
           let msg = result[0]
@@ -28,7 +28,8 @@ export function getSingleMessage() {
           resolve({
             msg: JSON.parse(msg.messagetext),
             messageid: msg.messageid,
-            popreceipt: msg.popreceipt
+            popreceipt: msg.popreceipt,
+            currentRetryCount: msg.currentRetryCount
           })
         }
         else

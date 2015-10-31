@@ -16,9 +16,13 @@ class Repositories extends React.Component {
 
       getAllRepositories()
         .then(repositories => {
-          this.props.dispatch({type: 'REPOSITORIES_LOADED', repositories: repositories})
+          this.props.dispatch({type: 'REPOSITORIES_LOADED', repositories})
         })
     }
+  }
+
+  componentWillUnmount() {
+    this.props.dispatch({type: 'UNLOAD_REPOSITORIES'})
   }
 
   synchroniseRepositories() {
@@ -39,7 +43,7 @@ class Repositories extends React.Component {
 
   removeRepository(repo) {
     this.props.dispatch({type: 'REMOVING_REPOSITORY', name: repo.repoName})
-    removeRepository(repo)
+    removeRepository(repo.repoId)
       .then(() => {
         this.props.dispatch({type: 'REPOSITORY_REMOVED', name: repo.repoName})
       })
@@ -64,6 +68,7 @@ class Repositories extends React.Component {
         <div style={{width: '50%', float: 'left'}}>
           <h2>Available</h2>
           <p>Missing a repoistory? <a href='#' onClick={this.synchroniseRepositories}>Synchronise</a></p>
+          <p>Note: Only showing repos with admin permissions</p>
           <ul>
             {
               _

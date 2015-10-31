@@ -12,6 +12,8 @@ var checkQueue = function () {
 var processMessage = function (message) {
   if (message) {
     console.log('Processing message', message)
+    if (message.currentRetryCount > 5)
+      throw new Error('Tried 5 times to process message')
 
     return dispatch(message.msg)
       .then(() => deleteMessage(message))
@@ -21,7 +23,10 @@ var processMessage = function (message) {
 }
 
 var processError = function(reason) {
-  console.log("Error:", reason)
+  console.log('Error processing message:', reason)
+  console.log('Waiting 10 seconds before trying again')
+  // Should probably do backoff or something based on the retry count.. cbf
+  setTimeout(checkQueue, 10000)
 }
 
 var setNextCheck = function (handledMsg) {
