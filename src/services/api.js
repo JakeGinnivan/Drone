@@ -8,6 +8,8 @@ import {
 import { AZURE_STORAGE_ACCOUNT, AZURE_STORAGE_ACCESS_KEY} from '../constants.js'
 import { enqueueMessage } from './messaging.js'
 
+// TODO need to move this into a proper app init so messaging does not start
+// until these tables are successfully created
 var tableService = azure.createTableService(AZURE_STORAGE_ACCOUNT, AZURE_STORAGE_ACCESS_KEY)
 tableService.createTableIfNotExists('userRepositories', function(error) {
   if (error) {
@@ -45,20 +47,26 @@ export function getAllRepositories(userId) {
   })
 }
 
-function setSelection(userId, repoName, selected) {
+// TODO Fix the crazy error handling in here....
+function setSelection(userId, repoId, selected) {
   var entGen = azure.TableUtilities.entityGenerator
+  console.log(`Start Setting ${userId} and ${repoId} selection status to ${selected}`)
   return new Promise((resolve, reject) => {
     try {
-      tableService.retrieveEntity('userRepositories', userId.toString(), repoName, function(error, result) {
+      tableService.retrieveEntity('userRepositories', userId.toString(), repoId.toString(), function(error, result) {
         if (error) {
+          console.log(error)
           reject(error)
         } else {
+          console.log(`Setting ${userId} and ${repoId} selection status to ${selected}`)
           result.Selected = entGen.Boolean(selected)
           try {
             tableService.mergeEntity('userRepositories', result, function(error) {
               if (error) {
+                console.log(error)
                 reject(error)
               } else{
+                console.log(`Done Setting ${userId} and ${repoId} selection status to ${selected}`)
                 resolve()
               }
             })
@@ -79,8 +87,8 @@ export function addRepository(userId, repoId, repoName) {
   return enqueueMessage({ type: 'addRepositoryHooks', userId, repoId, repoName }).then(() => setSelection(userId, repoId, true))
 }
 
-export function removeRepository(userId, repoId, repoName) {
-  return enqueueMessage({ type: 'removeRepositoryHooks', userId, repoId, repoName }).then(() => setSelection(userId, repoId, true))
+export function removeRepository(userId, repoId) {
+  return enqueueMessage({ type: 'removeRepositoryHooks', userId, repoId }).then(() => setSelection(userId, repoId, false))
 }
 function executeBatch(tableName, batch) {
   console.log(`Executing batch update for ${tableName}`)
@@ -100,17 +108,23 @@ function executeBatch(tableName, batch) {
   .then(() => console.log(`Done batch update for ${tableName}`))
   .catch(ex => {
     console.log(`Failed to execute batch for ${tableName}`, ex)
+    throw ex
   })
 }
 function executeBatches(tableName, batches, fetchAll) {
-  return Promise
+  var promise = Promise
     .all(batches.map(b => executeBatch(tableName, b)))
-    .then(fetchAll)
+  if (fetchAll) {
+    return promise.then(fetchAll)
+  } else {
+    return promise
+  }
 }
 
 export function synchroniseRepositories(userId, githubToken) {
   return Promise.all([getAllGithubRepositories(githubToken), getAllRepositories(userId)])
     .then(([ githubRepos, savedRepos ]) => {
+      githubRepos = _.filter(githubRepos, r => r.permissions.admin)
       console.log('Syncing repos')
       var existing = _.indexBy(savedRepos, 'repoName')
       console.log('From github', githubRepos.map(r => r.full_name))
@@ -143,33 +157,41 @@ export function synchroniseRepositories(userId, githubToken) {
         })
       } catch (e) {
         console.log('Failed to sync repositories', e)
+        throw e
       }
 
       return executeBatches('userRepositories', batches, () => getAllRepositories(userId))
     })
 }
 
-export function getAllIssues(userId, repoName) {
-  return queryTableEntities(
-      'issuesList',
-      query => query.where('PartitionKey == ? and RowKey == ?', userId.toString(), repoName)
-    )
-    .then(result => {
-      return _.sortBy(result.map(issue => ({
-        userId: issue.PartitionKey._,
-        repoName: issue.RowKey._,
-        issueTitle: issue.Title._,
-        issueNumber: issue.IssueNumber._,
-        issueUrl: issue.Url._,
-        issueActioned: issue.Actioned._,
-        lastOwnerActionTimestamp: issue.LastOwnerActionTimestamp._
-      })), 'lastOwnerActionTimestamp')
-    })
-}
+export function getAllIssues(userId, repoId) {
+  var filter = repoId ?
+    query => query.where('PartitionKey == ? and RepoId == ?', userId.toString(), repoId) :
+    query => query.where('PartitionKey == ?', userId.toString())
 
-function isActioned(comments, userId) {
-  var latestComment = _.max(comments, c => c.updated_at)
-  return latestComment === -Infinity ? undefined : latestComment.user.id === userId
+  return Promise.all([getAllRepositories(userId), queryTableEntities('issuesList', filter)])
+    .then(([allRepos, result]) => {
+      var repoNameLookup = {}
+      _.forEach(allRepos, r => repoNameLookup[r.repoId] = r.repoName)
+
+      return _.sortBy(result.map(issue => {
+        var i = {
+          userId: issue.PartitionKey._,
+          repoId: issue.RepoId._,
+          repoName: repoNameLookup[issue.RepoId._],
+          issueTitle: issue.Title._,
+          issueBody: issue.Body._,
+          issueType: issue.IssueType._,
+          issueNumber: issue.IssueNumber._,
+          issueUrl: issue.IssueUrl._,
+          labels: JSON.parse(issue.Labels._),
+          issueCreated: issue.IssueCreated._,
+          latestComment: issue.LatestComment ? JSON.parse(issue.LatestComment._) : undefined,
+          latestUserComment: issue.LatestUserComment ? JSON.parse(issue.LatestUserComment._) : undefined
+        }
+        return i
+      }), 'lastReleventInteractionTimetamp')
+    })
 }
 
 function getLastUserComment(comments, userId) {
@@ -178,21 +200,48 @@ function getLastUserComment(comments, userId) {
   return latestUserComment === -Infinity ? undefined : latestUserComment
 }
 
+function getLastComment(comments) {
+  var latestUserComment = _.max(comments, c => c.created_at)
+  return latestUserComment === -Infinity ? undefined : latestUserComment
+}
+
+function getIssueRowKey(repoId, issueNumber) {
+  return repoId.toString()+'+'+issueNumber.toString()
+}
+
 function toTableIssue(issue, userId, repoId) {
   var entity = {
     PartitionKey: entGen.String(userId.toString()),
-    RowKey: entGen.String(repoId.toString()),
+    RowKey: entGen.String(getIssueRowKey(repoId, issue.number)),
+    RepoId: entGen.String(repoId.toString()),
     Title: entGen.String(issue.title),
-    IssueNumber: entGen.Int32(issue.number),
+    Body: entGen.String(issue.body),
+    IssueNumber: entGen.String(issue.number.toString()),
     IssueUrl: entGen.String(issue.html_url),
-    Actioned: entGen.Boolean(!!isActioned(issue.comments, userId))
+    IssueType: entGen.String(issue.pull_request ? 'Pull Request' : 'Issue'),
+    IssueCreated: entGen.String(issue.created_at),
+    Labels: entGen.String(JSON.stringify(issue.labels)),
+    Version: entGen.Int32(1)
   }
-  var latestComment = getLastUserComment(issue.comments, userId)
+  var latestUserComment = getLastUserComment(issue.comments, userId)
+  if (latestUserComment) {
+    entity.LatestUserComment = entGen.String(JSON.stringify({
+      body: latestComment.body,
+      author: latestComment.user.login,
+      created: latestComment.created_at,
+      url: latestComment.html_url
+    }))
+  }
+  var latestComment = getLastComment(issue.comments)
   if (latestComment) {
-    console.log(issue.number, latestComment)
-    entity.LastOwnerActionId = entGen.Int32(latestComment.id)
-    entity.LastOwnerActionTimestamp = entGen.Int32(latestComment.created_at)
+    entity.LatestUserComment = entGen.String(JSON.stringify({
+      body: latestComment.body,
+      author: latestComment.user.login,
+      created: latestComment.created_at,
+      url: latestComment.html_url
+    }))
   }
+
   return entity
 }
 
@@ -204,6 +253,29 @@ function enrichWithComments(githubToken, issues, repoName) {
     }))
   return Promise.all(issuesWithComments)
 }
+
+export function deleteIssuesList(userId, repoId) {
+  var batches = []
+  var batch = new azure.TableBatch()
+  batches.push(batch)
+  return getAllIssues(userId, repoId)
+    .then(issues => {
+      if (issues.length === 0)
+        return
+      _.forEach(issues, i => {
+        if (batch.size() === 100) {
+          batch = new azure.TableBatch()
+          batches.push(batch)
+        }
+        batch.deleteEntity({
+          PartitionKey: entGen.String(userId.toString()),
+          RowKey: entGen.String(getIssueRowKey(repoId, i.issueNumber))
+        })
+      })
+      return executeBatches('issuesList', batches)
+    })
+}
+
 export function synchroniseIssuesList(userId, repoId, repoName, githubToken) {
   console.log('Synchronising issues list')
   return Promise.all([getAllGithubIssues(githubToken, repoName), getAllIssues(userId, repoId)])
@@ -241,10 +313,10 @@ export function synchroniseIssuesList(userId, repoId, repoName, githubToken) {
       return Promise.all([addPromise, updatePromise])
         .then(() => {
           console.log('Created batches, executing')
-          return executeBatches('issuesList', batches, () => getAllIssues(userId, repoName))
+          return executeBatches('issuesList', batches, () => getAllIssues(userId, repoId))
         })
         .then(r => {
-          console.log('Done synchronising issues', r)
+          console.log('Done synchronising issues')
           // TODO need to publish msg via a WS to client to cause their page to refresh
           return r
         })

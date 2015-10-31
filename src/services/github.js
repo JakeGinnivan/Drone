@@ -1,4 +1,5 @@
 import axios from 'axios'
+import _ from 'lodash'
 import { WEBHOOK_CALLBACK_URL } from '../constants'
 
 function parseLinkHeader(header) {
@@ -91,12 +92,19 @@ export function getCommentsForIssue(githubToken, repoName, issueNumber) {
       console.log(`done loading issue comments for ${repoName}/#${issueNumber}`)
       return response
     })
-    .catch(e => console.log(`Failed loading issue comments for ${repoName}/#${issueNumber}`, e))
+}
+
+export function webhookExists(githubToken, repoName) {
+  return axios
+    .get(`https://api.github.com/repos/${repoName}/hooks`, header(githubToken))
+    .then(repos => {
+      return _.some(repos.data, h => h.config.url === `${WEBHOOK_CALLBACK_URL}/githubEvent`)
+    })
 }
 
 export function addWebhook(githubToken, repoName) {
   var payload = {
-    name: 'web ',
+    name: 'web',
     active: true,
     events: [ 'push', 'pull_request', 'pull_request_review_comment', 'issues', 'issue_comment' ],
     config: {
@@ -104,13 +112,20 @@ export function addWebhook(githubToken, repoName) {
       content_type: 'json'
     }
   }
-  console.log(`Adding webhook for ${repoName}`, payload)
-  return axios
-    .post(`https://api.github.com/repos/${repoName}/hooks`, payload, header(githubToken))
-    .then(response => {
-      console.log('add hook', response)
-    })
-    .catch(e => {
-      console.log(e.data.errors)
+  console.log(`Adding webhook for ${repoName}`)
+  return webhookExists(githubToken, repoName)
+    .then(exists => {
+      if (exists) {
+        return true
+      }
+      return axios
+        .post(`https://api.github.com/repos/${repoName}/hooks`, payload, header(githubToken))
+        .then(() => {
+          console.log(`Add webhook for ${repoName}`)
+        })
+        .catch(e => {
+          console.log(e.data.errors)
+          throw e
+        })
     })
 }

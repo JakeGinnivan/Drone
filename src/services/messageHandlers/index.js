@@ -1,11 +1,13 @@
 import addRepositoryHooks from './addRepositoryHooks'
-//import removeRepositoryHooks from './removeRepositoryHooks'
+import removeRepositoryHooks from './removeRepositoryHooks'
 import refreshData from './refreshData'
+import removeData from './removeData'
 
 let handlers = {
   addRepositoryHooks,
-  //removeRepositoryHooks,
-  refreshData
+  removeRepositoryHooks,
+  refreshData,
+  removeData
 }
 console.log('Registered message handlers', handlers)
 

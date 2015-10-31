@@ -33,11 +33,33 @@ export default (state, action) => {
         repositories: action.repositories,
         repositoriesLoading: false
       })
+    case 'UNLOAD_REPOSITORIES':
+    {
+      let newState = Object.assign({}, state)
+      newState.repositories = undefined
+      return newState
+    }
+    case 'UNLOAD_ISSUES':
+    {
+      let newState = Object.assign({}, state)
+      newState.issues = undefined
+      return newState
+    }
     case 'LOADING_REPOSITORIES':
     case 'SYNCHRONISING_REPOSITORIES':
       return Object.assign({}, state, {
         repositories: [],
         repositoriesLoading: true
+      })
+    case 'ISSUES_LOADED':
+      return Object.assign({}, state, {
+        issues: action.issues,
+        issuesLoading: false
+      })
+    case 'LOADING_ISSUES':
+      return Object.assign({}, state, {
+        issues: [],
+        issuesLoading: true
       })
     case 'ADDING_REPOSITORY':
     case 'REMOVING_REPOSITORY':
@@ -53,13 +75,9 @@ export default (state, action) => {
       return Object.assign({}, state, repos)
     }
     case 'REPOSITORY_ADDED':
-    {
-      toggleRepoAdded(state, action.name, true)
-    }
+      return toggleRepoAdded(state, action.name, true)
     case 'REPOSITORY_REMOVED':
-    {
-      toggleRepoAdded(state, action.name, false)
-    }
+      return toggleRepoAdded(state, action.name, false)
     default:
       return state
   }
